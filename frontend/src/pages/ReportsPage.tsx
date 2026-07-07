@@ -1,19 +1,16 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
-  FileText, Trash2, Eye, Upload, ChevronLeft, ChevronRight,
-  RefreshCw, Clock, CheckCircle, XCircle, Loader2, FolderOpen, X,
+  FileBarChart, Download, FileText, ChevronLeft, ChevronRight,
+  RefreshCw, CheckCircle, XCircle, Loader2, Clock,
+  FileSpreadsheet, FileType2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import { logsApi } from '@/api';
 import { AppLayout } from '@/components/layout/AppLayout';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
 import { TableRowSkeleton } from '@/components/ui/Skeleton';
-import type { UploadedLog } from '@/types';
 
 function StatusIcon({ status }: { status: string }) {
   if (status === 'completed') return <CheckCircle className="w-4 h-4 text-success" />;
@@ -27,81 +24,98 @@ function formatSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export default function LogHistoryPage() {
-  const queryClient = useQueryClient();
+async function downloadBlob(uploadId: string, type: 'csv' | 'pdf') {
+  try {
+    toast.loading(`Preparing ${type.toUpperCase()}…`, { id: `export-${uploadId}` });
+    const res = type === 'csv'
+      ? await logsApi.exportCsv(uploadId)
+      : await logsApi.exportPdf(uploadId);
+    const url = URL.createObjectURL(res.data as Blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = type === 'csv' ? `logs_${uploadId}.csv` : `report_${uploadId}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${type.toUpperCase()} downloaded!`, { id: `export-${uploadId}` });
+  } catch {
+    toast.error(`Failed to export ${type.toUpperCase()}`, { id: `export-${uploadId}` });
+  }
+}
+
+export default function ReportsPage() {
   const [page, setPage] = useState(1);
-  const [deleteTarget, setDeleteTarget] = useState<UploadedLog | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const projectId = searchParams.get('project_id') || undefined;
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['uploads', page, projectId],
-    queryFn: () => logsApi.listUploads(page, 20, projectId),
-  });
-
-  const clearProjectFilter = () => {
-    setSearchParams({});
-    setPage(1);
-  };
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => logsApi.deleteUpload(id),
-    onSuccess: () => {
-      toast.success('Log deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['uploads'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
-      setDeleteTarget(null);
-    },
-    onError: () => toast.error('Failed to delete log'),
+    queryKey: ['uploads-reports', page],
+    queryFn: () => logsApi.listUploads(page, 20),
   });
 
   const uploads = data?.data.data ?? [];
   const total = data?.data.total ?? 0;
   const totalPages = data?.data.total_pages ?? 1;
 
+  // Only show completed uploads (can actually export)
+  const completedCount = uploads.filter(u => u.status === 'completed').length;
+
   return (
-    <AppLayout breadcrumbs={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Log History' }]}>
+    <AppLayout
+      breadcrumbs={[
+        { label: 'Dashboard', path: '/dashboard' },
+        { label: 'Reports' },
+      ]}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Log History</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Reports & Exports</h1>
           <p className="text-text-secondary text-sm mt-0.5">
-            {total} uploaded file{total !== 1 ? 's' : ''}
-            {projectId && ' in this project'}
+            Download your log analyses as CSV or PDF
           </p>
-          {projectId && (
-            <button
-              onClick={clearProjectFilter}
-              className="flex items-center gap-1.5 mt-1.5 text-xs text-primary-400 hover:text-primary-300 transition-colors"
-            >
-              <FolderOpen className="w-3 h-3" />
-              Filtered by project
-              <X className="w-3 h-3" />
-            </button>
-          )}
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => refetch()} className="btn-icon btn-secondary" title="Refresh">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <Link to="/upload" className="btn-primary btn">
-            <Upload className="w-4 h-4" /> Upload New
-          </Link>
-        </div>
+        <button onClick={() => refetch()} className="btn-icon btn-secondary" title="Refresh">
+          <RefreshCw className="w-4 h-4" />
+        </button>
       </div>
+
+      {/* Info banner */}
+      {!isLoading && uploads.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-4 mb-6 flex items-center gap-3 border-primary-500/20"
+        >
+          <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
+            <FileBarChart className="w-4 h-4 text-primary-400" />
+          </div>
+          <div className="flex-1 text-sm">
+            <span className="text-text-primary font-medium">{completedCount}</span>
+            <span className="text-text-muted"> of {total} upload{total !== 1 ? 's' : ''} ready for export</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-text-muted">
+            <div className="flex items-center gap-1.5">
+              <FileSpreadsheet className="w-3.5 h-3.5 text-success" />
+              <span>CSV — raw data</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <FileType2 className="w-3.5 h-3.5 text-danger" />
+              <span>PDF — formatted report</span>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Table */}
       <div className="table-container">
         <table className="table">
           <thead>
             <tr>
-              <th>File</th>
+              <th>Log File</th>
               <th>Type</th>
               <th>Size</th>
-              <th>Parsed</th>
+              <th>Entries</th>
               <th>Status</th>
-              <th>Uploaded</th>
-              <th>Actions</th>
+              <th>Date</th>
+              <th className="text-center">Export</th>
             </tr>
           </thead>
           <tbody>
@@ -110,31 +124,27 @@ export default function LogHistoryPage() {
             ) : uploads.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center py-16">
-                  <FileText className="w-12 h-12 text-text-muted mx-auto mb-3" />
-                  <p className="text-text-secondary font-medium mb-1">No logs uploaded yet</p>
-                  <p className="text-text-muted text-sm mb-4">Upload your first log file to get started</p>
-                  <Link to="/upload" className="btn-primary btn btn-sm inline-flex">
-                    <Upload className="w-3.5 h-3.5" /> Upload Logs
-                  </Link>
+                  <FileBarChart className="w-12 h-12 text-text-muted mx-auto mb-3" />
+                  <p className="text-text-secondary font-medium mb-1">No logs to export</p>
+                  <p className="text-text-muted text-sm">Upload some log files to generate reports</p>
                 </td>
               </tr>
             ) : (
-              uploads.map((upload) => (
+              uploads.map((upload, i) => (
                 <motion.tr
                   key={upload.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.03 }}
                 >
                   <td>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
                         <FileText className="w-4 h-4 text-primary-400" />
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate max-w-[200px]">
-                          {upload.original_filename}
-                        </p>
-                      </div>
+                      <p className="text-sm font-medium text-text-primary truncate max-w-[180px]">
+                        {upload.original_filename}
+                      </p>
                     </div>
                   </td>
                   <td>
@@ -161,20 +171,28 @@ export default function LogHistoryPage() {
                     {format(new Date(upload.created_at), 'MMM d, yyyy HH:mm')}
                   </td>
                   <td>
-                    <div className="flex items-center gap-1">
-                      <Link
-                        to={`/logs/${upload.id}`}
-                        className="btn-icon btn-ghost btn-sm"
-                        title="View"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </Link>
+                    <div className="flex items-center justify-center gap-1.5">
                       <button
-                        onClick={() => setDeleteTarget(upload)}
-                        className="btn-icon btn-ghost btn-sm hover:text-danger hover:bg-danger/10"
-                        title="Delete"
+                        onClick={() => downloadBlob(upload.id, 'csv')}
+                        disabled={upload.status !== 'completed'}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
+                          bg-success/10 text-success hover:bg-success/20 transition-colors
+                          disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Download CSV"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Download className="w-3 h-3" />
+                        CSV
+                      </button>
+                      <button
+                        onClick={() => downloadBlob(upload.id, 'pdf')}
+                        disabled={upload.status !== 'completed'}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
+                          bg-danger/10 text-danger hover:bg-danger/20 transition-colors
+                          disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Download PDF"
+                      >
+                        <Download className="w-3 h-3" />
+                        PDF
                       </button>
                     </div>
                   </td>
@@ -224,30 +242,6 @@ export default function LogHistoryPage() {
           </div>
         </div>
       )}
-
-      {/* Delete confirmation modal */}
-      <Modal
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete Log File"
-        size="sm"
-      >
-        <p className="text-text-secondary text-sm mb-4">
-          Are you sure you want to delete{' '}
-          <strong className="text-text-primary">{deleteTarget?.original_filename}</strong>?
-          This will permanently remove all parsed log entries.
-        </p>
-        <div className="flex gap-3 justify-end">
-          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button
-            variant="danger"
-            loading={deleteMutation.isPending}
-            onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-          >
-            Delete
-          </Button>
-        </div>
-      </Modal>
     </AppLayout>
   );
 }

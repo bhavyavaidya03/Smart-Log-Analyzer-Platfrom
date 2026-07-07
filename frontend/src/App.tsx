@@ -18,6 +18,11 @@ import AnalyticsPage from '@/pages/AnalyticsPage';
 import ProfilePage from '@/pages/ProfilePage';
 import AboutPage from '@/pages/AboutPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import ProjectsPage from '@/pages/ProjectsPage';
+import ReportsPage from '@/pages/ReportsPage';
+import SettingsPage from '@/pages/SettingsPage';
+import ContactPage from '@/pages/ContactPage';
+import AdminUsersPage from '@/pages/AdminUsersPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +65,11 @@ export default function App() {
           <Route path="/logs/:id" element={<ProtectedRoute><LogDetailPage /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/contact" element={<ProtectedRoute><ContactPage /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
           <Route path="/about" element={<AboutPage />} />
 
           {/* 404 */}
