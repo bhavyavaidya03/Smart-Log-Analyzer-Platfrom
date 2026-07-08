@@ -1,7 +1,6 @@
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { useUIStore } from '@/store/uiStore';
-import clsx from 'clsx';
 
 interface AppLayoutProps {
   children: React.ReactNode;

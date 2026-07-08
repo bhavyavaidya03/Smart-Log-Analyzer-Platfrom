@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, Github, Shield, Code2, BarChart3, Globe } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Zap, Shield, Code2, BarChart3, Globe, ExternalLink } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 const features = [
@@ -68,7 +67,7 @@ export default function AboutPage() {
               target="_blank"
               className="btn-secondary btn btn-lg inline-flex"
             >
-              <Github className="w-4 h-4" /> View Source on GitHub
+              <ExternalLink className="w-4 h-4" /> View Source on GitHub
             </a>
           </div>
         </motion.div>

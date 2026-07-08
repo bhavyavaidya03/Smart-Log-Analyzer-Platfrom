@@ -1,7 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bell, Search, Sun, Moon, Menu, ChevronDown, LogOut, Settings, User,
+  Bell, Sun, Moon, Menu, ChevronDown, LogOut, Settings, User,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';

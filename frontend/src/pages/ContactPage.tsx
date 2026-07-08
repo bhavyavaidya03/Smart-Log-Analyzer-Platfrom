@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Mail, MessageSquare, Code2, Globe, Send, CheckCircle,
   ExternalLink, Book, Bug, Lightbulb,
-  Zap, Zap,
+  Zap,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
@@ -140,8 +140,8 @@ export default function ContactPage() {
                           id={`category-${value}`}
                           onClick={() => setSelectedCategory(value)}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${selectedCategory === value
-                              ? 'bg-primary-500 text-white shadow-glow'
-                              : 'bg-bg-elevated border border-bg-border text-text-secondary hover:border-primary-500/30 hover:text-text-primary'
+                            ? 'bg-primary-500 text-white shadow-glow'
+                            : 'bg-bg-elevated border border-bg-border text-text-secondary hover:border-primary-500/30 hover:text-text-primary'
                             }`}
                         >
                           <Icon className="w-3.5 h-3.5" />

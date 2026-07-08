@@ -23,11 +23,11 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # ── Database ──────────────────────────────────────────────────────────────
-    DATABASE_URL: str = "postgresql+asyncpg://sla_user:sla_password@localhost:5432/smart_log_analyzer"
+    DATABASE_URL: str = "postgresql+asyncpg://sla_user:sla_password@postgres:5432/smart_log_analyzer"
     POSTGRES_USER: str = "sla_user"
     POSTGRES_PASSWORD: str = "sla_password"
     POSTGRES_DB: str = "smart_log_analyzer"
-    POSTGRES_HOST: str = "localhost"
+    POSTGRES_HOST: str = "postgres"
     POSTGRES_PORT: int = 5432
 
     # ── JWT ───────────────────────────────────────────────────────────────────
