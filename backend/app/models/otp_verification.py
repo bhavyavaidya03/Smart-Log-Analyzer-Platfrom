@@ -1,5 +1,9 @@
 """OTPVerification ORM model."""
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from app.models.user import User
+    
 import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
@@ -29,7 +33,14 @@ class OTPVerification(Base):
         index=True,
     )
     otp_code: Mapped[str] = mapped_column(String(6), nullable=False)
-    purpose: Mapped[OTPPurpose] = mapped_column(Enum(OTPPurpose), nullable=False)
+    purpose: Mapped[OTPPurpose] = mapped_column(
+    Enum(
+        OTPPurpose,
+        values_callable=lambda obj: [e.value for e in obj],
+        name="otppurpose",
+    ),
+    nullable=False,
+)
     is_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

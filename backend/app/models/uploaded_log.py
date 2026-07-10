@@ -30,8 +30,15 @@ class UploadedLog(Base):
     file_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
     file_path: Mapped[str] = mapped_column(String(500), nullable=False)
     status: Mapped[UploadStatus] = mapped_column(
-        Enum(UploadStatus), default=UploadStatus.PENDING, nullable=False, index=True
-    )
+    Enum(
+        UploadStatus,
+        values_callable=lambda obj: [e.value for e in obj],
+        name="uploadstatus",
+    ),
+    default=UploadStatus.PENDING,
+    nullable=False,
+    index=True,
+)
     total_lines: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     parsed_lines: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     error_message: Mapped[str | None] = mapped_column(String(500), nullable=True)

@@ -31,7 +31,14 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(200), nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole), default=UserRole.USER, nullable=False
+    Enum(
+        UserRole,
+        values_callable=lambda obj: [e.value for e in obj],
+        name="userrole",
+    ),
+    default=UserRole.USER,
+    nullable=False,
+
     )
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -63,3 +70,11 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email}>"
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.uploaded_log import UploadedLog
+    from app.models.otp_verification import OTPVerification
+    from app.models.password_reset_token import PasswordResetToken

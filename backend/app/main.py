@@ -72,12 +72,18 @@ app.add_middleware(
 # ── Global Exception Handler ──────────────────────────────────────────────────
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception on {request.method} {request.url}: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"success": False, "message": "An internal server error occurred."},
-    )
+    import traceback
 
+    traceback.print_exc()
+
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "message": str(exc),
+            "type": type(exc).__name__,
+        },
+    )
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 app.include_router(api_v1_router)
