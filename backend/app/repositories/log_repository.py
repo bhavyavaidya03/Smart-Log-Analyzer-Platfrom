@@ -166,12 +166,12 @@ class LogRepository:
                 FROM parsed_logs pl
                 JOIN uploaded_logs ul ON pl.upload_id = ul.id
                 WHERE ul.user_id = :user_id
-                    AND pl.timestamp >= NOW() - INTERVAL :days_interval
+                    AND pl.timestamp >= NOW() - (:days * INTERVAL '1 day')
                     AND pl.timestamp IS NOT NULL
                 GROUP BY DATE(pl.timestamp AT TIME ZONE 'UTC'), pl.level
                 ORDER BY date ASC
             """),
-            {"user_id": str(user_id), "days_interval": f"{days} days"},
+            {"user_id": str(user_id), "days": days},
         )
         return [{"date": str(r[0]), "level": r[1], "count": r[2]} for r in result.all()]
 

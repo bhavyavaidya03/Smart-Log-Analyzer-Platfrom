@@ -127,14 +127,52 @@ class LogService:
         # For CSV: convert to newline-separated values for parsing
         if ext == ".csv":
             import csv
+
             reader = csv.DictReader(io.StringIO(text))
             lines = []
+
             for row in reader:
-                # Try to reconstruct a log-like line
-                msg = row.get("message") or row.get("msg") or str(dict(row))
-                level = row.get("level") or row.get("severity") or "INFO"
-                ts = row.get("timestamp") or row.get("time") or ""
-                lines.append(f"{ts} - {level} - {msg}" if ts else f"{level}: {msg}")
+                normalized_row = {
+                    str(key).lower().strip(): value
+                    for key, value in row.items()
+                    if key is not None
+                }
+
+                msg = (
+                    normalized_row.get("message")
+                    or normalized_row.get("msg")
+                    or normalized_row.get("text")
+                )
+
+                level = (
+                    normalized_row.get("level")
+                    or normalized_row.get("severity")
+                    or normalized_row.get("log_level")
+                )
+
+                ts = (
+                    normalized_row.get("timestamp")
+                    or normalized_row.get("time")
+                    or normalized_row.get("date")
+                    or ""
+                )
+
+                source = (
+                    normalized_row.get("source")
+                    or normalized_row.get("service")
+                    or normalized_row.get("logger")
+                    or "csv"
+                )
+
+                if not msg or not level:
+                    lines.append(str(dict(row)))
+                    continue
+
+                if ts:
+                    lines.append(f"{ts} - {source} - {level.upper()} - {msg}")
+                else:
+                    lines.append(f"{level.upper()}: {msg}")
+
             return "\n".join(lines)
 
         return text
